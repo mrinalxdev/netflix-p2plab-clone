@@ -80,4 +80,123 @@ func GenerateLinearDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
 		nodes = append(nodes, currNode)
 		prevNode = currNode
 	}
+
+	return prevNode, nodes, nil
 }
+
+
+func GenerateBinaryTreeDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
+	if numNodes <= 0 {
+		return nil, nil, fmt.Errorf("numNodes must be positive")
+	}
+
+	nodes := make([]*myipld.MyNode, 0, numNodes)
+	queue := make([]*myipld.MyNode, 0)
+
+
+	rootData := map[string]interface {}{
+		"index" : 0,
+		"timestamp" : time.Now().UnixNano(),
+		"message" : "root-node",
+	}
+
+	rootNode, err := myipld.NewMyNode(rootData)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create root node : %w", err)
+	}
+
+
+	nodes = append(nodes, rootNode)
+	queue = append(queue, rootNode)
+
+
+	index := 1
+
+	for len(queue) > 0 && index < numNodes {
+		current := queue[0]
+		queue = queue[1:]
+
+
+		// adding the left child to the most left node
+		// why am I adding children to nodes ??
+		// ....
+		if index < numNodes {
+			leftData := map[string]interface{}{
+				"index" : index,
+				"timestamp" : time.Now().UnixNano(),
+				"message" : fmt.Sprintf("node-%d-data", index),
+			}
+
+
+			leftNode, err := myipld.NewMyNode(leftData)
+
+
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to create left child %d : %w", index, err)
+			}
+
+
+			linkName := fmt.Sprintf("left-child-%x", leftNode.Cid.Hash[:8])
+
+			if err := current.AddLink(linkName, leftNode.Cid); err != nil {
+				return nil, nil, fmt.Errorf("failed to add left link : %w", err)
+			}
+
+			nodes = append(nodes, leftNode)
+			queue = append(queue, leftNode)
+
+			index++
+
+		}
+
+		// adding the right child to the most right node
+
+
+		if index < numNodes {
+			rightData := map[string]interface{}{
+				"index" : index,
+				"timestamp": time.Now().UnixNano(),
+				"message": fmt.Sprintf("node-%d-data", index),
+			}
+
+
+			rightNode, err := myipld.NewMyNode(rightData)
+
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to create right child %d : %w", index , err)
+			}
+
+
+			linkName := fmt.Sprintf("right-child-%x", rightNode.Cid.Hash[:8])
+
+
+			if err := current.AddLink(linkName, rightNode.Cid); err != nil {
+				return nil, nil, fmt.Errorf("failed to add right link : %w", err)
+			}
+
+			nodes = append(nodes, rightNode)
+			queue = append(queue, rightNode)
+
+			index++
+		}
+	}
+
+	return rootNode, nodes, nil
+}
+
+func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyNode, error){
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
