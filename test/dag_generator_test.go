@@ -7,10 +7,10 @@ import (
 
 func TestDAGSStructure(t *testing.T) {
 	testCases := []struct {
-		name string
-		structure  bench.DAGStructure
+		name      string
+		structure bench.DAGStructure
 		nodeCount int
-	} {
+	}{
 		{"LinearDAG-100", bench.LinearDAG, 100},
 		{"BinaryTreeDAG-100", bench.BinaryTreeDAG, 100},
 		{"StarDAG-100", bench.StarDAG, 100},
@@ -19,8 +19,8 @@ func TestDAGSStructure(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T){
-			root, nodes, err := bench.GenerateDAG(tc.structure ,tc.nodeCount)
+		t.Run(tc.name, func(t *testing.T) {
+			root, nodes, err := bench.GenerateDAG(tc.structure, tc.nodeCount)
 
 			if err != nil {
 				t.Fatalf("Failed to generate %s: %v", tc.name, err)
@@ -30,20 +30,24 @@ func TestDAGSStructure(t *testing.T) {
 				t.Fatalf("Root node is nil for %s", tc.name)
 			}
 
-
 			if len(nodes) != tc.nodeCount {
 				t.Fatalf("Expected %d nodes, got %d for %s", tc.nodeCount, len(nodes), tc.name)
 			}
 
-
 			// verifying if all nodes have valid CIDs
+			// for i, node := range nodes {
+			// 	if node.Cid.Hash == [32]byte{}{
+			// 		t.Errorf("Node %d has empty CID in %s", i, tc.name)
+			// 	}
+			// }
+
 			for i, node := range nodes {
-				if node.Cid.Hash == [32]byte{}{
+				var emptyHash [32]byte
+
+				if node.Cid.Hash == emptyHash {
 					t.Errorf("Node %d has empty CID in %s", i, tc.name)
 				}
 			}
-
-
 
 			metrics := bench.AnalyzeDAGStructure(root, nodes)
 
@@ -54,8 +58,7 @@ func TestDAGSStructure(t *testing.T) {
 	}
 }
 
-
-func TestInvalidDAGParameter(t *testing.T){
+func TestInvalidDAGParameter(t *testing.T) {
 	_, _, err := bench.GenerateDAG(bench.LinearDAG, 0)
 	if err == nil {
 		t.Error("Expected error for zero nodes")
@@ -86,8 +89,3 @@ func TestDAGStructureString(t *testing.T) {
 		}
 	}
 }
-
-
-
-
-

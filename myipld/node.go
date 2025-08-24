@@ -41,8 +41,15 @@ func NewMyNode(data interface{}) (*MyNode, error) {
 	the data
 	*/
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to compute CID for new new node, %w", err)
+
+	/*
+	Bug Resolve
+
+	I was not calculating the recomputeCID here LOL T _ T
+	*/
+
+	if err := node.recomputeCID(); err != nil {
+		return nil, fmt.Errorf("failed to compute CID for new node: %w", err)
 	}
 
 	return node, nil
