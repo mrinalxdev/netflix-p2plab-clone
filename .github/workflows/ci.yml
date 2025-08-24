@@ -8,4 +8,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23.x'
-      - run: go test -v -race ./...
+          cache: true
+      - name: Run tests
+        run: |
+          go test -v -race ./test/...
+          go test -v -race ./myipld/
+          go test -v -race ./bench/
+      - name: Run benchmarks
+        run: |
+          go test -bench=. -benchmem ./test/ > benchmark_results.txt
+          cat benchmark_results.txt
