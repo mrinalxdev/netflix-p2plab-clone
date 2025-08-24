@@ -29,11 +29,11 @@ func main() {
 	if customRootNode == nil {
 		log.Fatal("Root custom node is nil, cannot perform traversal benchmark (Custom IPLD).")
 	}
-	bench.BenchmarkCustomTraversal(customRootNode, customNodes) 
+	bench.BenchmarkTraversal(customRootNode, customNodes) 
 	fmt.Println("\n--- Benchmarking DAG Serialization (Custom IPLD, 1000 nodes) ---")
-	bench.BenchmarkCustomSerialization(customRootNode)
+	bench.BenchmarkSerialization(customRootNode)
 	fmt.Println("\n--- Benchmarking DAG Deserialization (Custom IPLD, 1000 nodes) ---")
-	bench.BenchmarkCustomDeserialization(customRootNode)
+	bench.BenchmarkDeserialization(customRootNode)
 
 	fmt.Println("\nIPLD DAG Benchmarks Completed.")
 }
