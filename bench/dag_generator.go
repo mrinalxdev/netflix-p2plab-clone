@@ -47,8 +47,7 @@ func GenerateDAG(structure DAGStructure, numNodes int) (*myipld.MyNode, []*myipl
 	}
 }
 
-
-func GenerateLinearDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
+func GenerateLinearDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
 	if numNodes <= 0 {
 		return nil, nil, fmt.Errorf("numNodes must be positive")
 	}
@@ -56,24 +55,22 @@ func GenerateLinearDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
 	nodes := make([]*myipld.MyNode, 0, numNodes)
 	var prevNode *myipld.MyNode
 
-
 	for i := 0; i < numNodes; i++ {
 		nodeData := map[string]interface{}{
-			"index" : i,
+			"index":     i,
 			"timestamp": time.Now().UnixNano(),
-			"message" : fmt.Sprintf("node-%d-data", i),
+			"message":   fmt.Sprintf("node-%d-data", i),
 		}
 
 		currNode, err := myipld.NewMyNode(nodeData)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create node %d : %w", i , err)
+			return nil, nil, fmt.Errorf("failed to create node %d : %w", i, err)
 		}
 
-
 		if prevNode != nil {
-			linkName := fmt.Sprintf("link-to-%w ", prevNode.Cid.Hash[:8])
+			linkName := fmt.Sprint("link-to-%w ", prevNode.Cid.Hash[:8])
 
-			if err := currNode.AddLink(linkName , prevNode.Cid); err != nil {
+			if err := currNode.AddLink(linkName, prevNode.Cid); err != nil {
 				return nil, nil, fmt.Errorf("Failed to add link to node %d: %w", i, err)
 			}
 		}
@@ -85,7 +82,6 @@ func GenerateLinearDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
 	return prevNode, nodes, nil
 }
 
-
 func GenerateCustomDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
 	if numNodes <= 0 {
 		return nil, nil, fmt.Errorf("numNodes must be positive")
@@ -93,11 +89,10 @@ func GenerateCustomDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
 
 	var (
 		nodes    []*myipld.MyNode
-		prevNode *myipld.MyNode   
-		currNode *myipld.MyNode   
+		prevNode *myipld.MyNode
+		currNode *myipld.MyNode
 		err      error
 	)
-
 
 	leafData := map[string]interface{}{
 		"content": "custom-leaf-data-0",
@@ -128,152 +123,231 @@ func GenerateCustomDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
 		}
 
 		nodes = append(nodes, currNode)
-		prevNode = currNode           
+		prevNode = currNode
 	}
 
 	return currNode, nodes, nil
 }
 
+// func GenerateBinaryTreeDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
+// 	if numNodes <= 0 {
+// 		return nil, nil, fmt.Errorf("numNodes must be positive")
+// 	}
 
+// 	nodes := make([]*myipld.MyNode, 0, numNodes)
+// 	queue := make([]*myipld.MyNode, 0)
 
-func GenerateBinaryTreeDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
-	if numNodes <= 0 {
-		return nil, nil, fmt.Errorf("numNodes must be positive")
-	}
+// 	rootData := map[string]interface{}{
+// 		"index":     0,
+// 		"timestamp": time.Now().UnixNano(),
+// 		"message":   "root-node",
+// 	}
 
-	nodes := make([]*myipld.MyNode, 0, numNodes)
-	queue := make([]*myipld.MyNode, 0)
+// 	rootNode, err := myipld.NewMyNode(rootData)
 
+// 	if err != nil {
+// 		return nil, nil, fmt.Errorf("failed to create root node : %w", err)
+// 	}
 
-	rootData := map[string]interface {}{
-		"index" : 0,
-		"timestamp" : time.Now().UnixNano(),
-		"message" : "root-node",
-	}
+// 	if len(rootNode.Links) == 0 && numNodes > 1 {
+// 		return nil, nil, fmt.Errorf("root node has no links, cannot form tree")
+// 	}
 
-	rootNode, err := myipld.NewMyNode(rootData)
+// 	nodes = append(nodes, rootNode)
+// 	queue = append(queue, rootNode)
 
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create root node : %w", err)
-	}
+// 	index := 1
 
+// 	for len(queue) > 0 && index < numNodes {
+// 		current := queue[0]
+// 		queue = queue[1:]
 
-	nodes = append(nodes, rootNode)
-	queue = append(queue, rootNode)
+// 		// adding the left child to the most left node
+// 		// why am I adding children to nodes ??
+// 		// ....
+// 		if index < numNodes {
+// 			leftData := map[string]interface{}{
+// 				"index":     index,
+// 				"timestamp": time.Now().UnixNano(),
+// 				"message":   fmt.Sprintf("node-%d-data", index),
+// 			}
 
+// 			leftNode, err := myipld.NewMyNode(leftData)
 
-	index := 1
+// 			if err != nil {
+// 				return nil, nil, fmt.Errorf("failed to create left child %d : %w", index, err)
+// 			}
 
-	for len(queue) > 0 && index < numNodes {
-		current := queue[0]
-		queue = queue[1:]
+// 			linkName := fmt.Sprintf("left-child-%x", leftNode.Cid.Hash[:8])
 
+// 			if err := current.AddLink(linkName, leftNode.Cid); err != nil {
+// 				return nil, nil, fmt.Errorf("failed to add left link : %w", err)
+// 			}
 
-		// adding the left child to the most left node
-		// why am I adding children to nodes ??
-		// ....
-		if index < numNodes {
-			leftData := map[string]interface{}{
-				"index" : index,
-				"timestamp" : time.Now().UnixNano(),
-				"message" : fmt.Sprintf("node-%d-data", index),
-			}
+// 			nodes = append(nodes, leftNode)
+// 			queue = append(queue, leftNode)
 
+// 			index++
 
-			leftNode, err := myipld.NewMyNode(leftData)
+// 		}
 
+// 		// adding the right child to the most right node
 
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to create left child %d : %w", index, err)
-			}
+// 		if index < numNodes {
+// 			rightData := map[string]interface{}{
+// 				"index":     index,
+// 				"timestamp": time.Now().UnixNano(),
+// 				"message":   fmt.Sprintf("node-%d-data", index),
+// 			}
+// 			rightNode, err := myipld.NewMyNode(rightData)
 
+// 			if err != nil {
+// 				return nil, nil, fmt.Errorf("failed to create right child %d : %w", index, err)
+// 			}
+// 			linkName := fmt.Sprintf("right-child-%x", rightNode.Cid.Hash[:8])
 
-			linkName := fmt.Sprintf("left-child-%x", leftNode.Cid.Hash[:8])
+// 			if err := current.AddLink(linkName, rightNode.Cid); err != nil {
+// 				return nil, nil, fmt.Errorf("failed to add right link : %w", err)
+// 			}
 
-			if err := current.AddLink(linkName, leftNode.Cid); err != nil {
-				return nil, nil, fmt.Errorf("failed to add left link : %w", err)
-			}
+// 			nodes = append(nodes, rightNode)
+// 			queue = append(queue, rightNode)
 
-			nodes = append(nodes, leftNode)
-			queue = append(queue, leftNode)
+// 			index++
+// 		}
+// 	}
 
-			index++
+// 	return rootNode, nodes, nil
+// }
 
-		}
+// bench/dag_generator.go
+func GenerateBinaryTreeDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
+    if numNodes <= 0 {
+        return nil, nil, fmt.Errorf("numNodes must be positive")
+    }
 
-		// adding the right child to the most right node
+    var nodes []*myipld.MyNode
 
+    rootData := map[string]interface{}{
+        "index":     0,
+        "timestamp": time.Now().UnixNano(),
+        "message":   "root-node",
+    }
+    rootNode, err := myipld.NewMyNode(rootData)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed to create root node: %w", err)
+    }
+    nodes = append(nodes, rootNode)
 
-		if index < numNodes {
-			rightData := map[string]interface{}{
-				"index" : index,
-				"timestamp": time.Now().UnixNano(),
-				"message": fmt.Sprintf("node-%d-data", index),
-			}
-			rightNode, err := myipld.NewMyNode(rightData)
+    if numNodes == 1 {
+        return rootNode, nodes, nil
+    }
 
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to create right child %d : %w", index , err)
-			}
-			linkName := fmt.Sprintf("right-child-%x", rightNode.Cid.Hash[:8])
+    queue := []*myipld.MyNode{rootNode}
+    index := 1
 
+    for len(queue) > 0 && index < numNodes {
+        current := queue[0]
+        queue = queue[1:]
 
-			if err := current.AddLink(linkName, rightNode.Cid); err != nil {
-				return nil, nil, fmt.Errorf("failed to add right link : %w", err)
-			}
+        // Left child
+        if index < numNodes {
+            leftData := map[string]interface{}{
+                "index":     index,
+                "timestamp": time.Now().UnixNano(),
+                "message":   fmt.Sprintf("node-%d-data", index),
+            }
+            leftNode, err := myipld.NewMyNode(leftData)
+            if err != nil {
+                return nil, nil, fmt.Errorf("failed to create left child %d: %w", index, err)
+            }
 
-			nodes = append(nodes, rightNode)
-			queue = append(queue, rightNode)
+            linkName := fmt.Sprintf("left-%x", leftNode.Cid.Hash[:8])
+            if err := current.AddLink(linkName, leftNode.Cid); err != nil {
+                return nil, nil, fmt.Errorf("failed to add left link: %w", err)
+            }
 
-			index++
-		}
-	}
+            nodes = append(nodes, leftNode)
+            queue = append(queue, leftNode)
+            index++
+        }
 
-	return rootNode, nodes, nil
+        // Right child
+        if index < numNodes {
+            rightData := map[string]interface{}{
+                "index":     index,
+                "timestamp": time.Now().UnixNano(),
+                "message":   fmt.Sprintf("node-%d-data", index),
+            }
+            rightNode, err := myipld.NewMyNode(rightData)
+            if err != nil {
+                return nil, nil, fmt.Errorf("failed to create right child %d: %w", index, err)
+            }
+
+            linkName := fmt.Sprintf("right-%x", rightNode.Cid.Hash[:8])
+            if err := current.AddLink(linkName, rightNode.Cid); err != nil {
+                return nil, nil, fmt.Errorf("failed to add right link: %w", err)
+            }
+
+            nodes = append(nodes, rightNode)
+            queue = append(queue, rightNode)
+            index++
+        }
+    }
+
+    // Final validation: ensure all linked nodes are in `nodes`
+    for _, node := range nodes {
+        for _, link := range node.Links {
+            found := false
+            for _, n := range nodes {
+                if n.Cid == link.Cid {
+                    found = true
+                    break
+                }
+            }
+            if !found {
+                return nil, nil, fmt.Errorf("node %x has link to %x not found in nodes", node.Cid.Hash[:8], link.Cid.Hash[:8])
+            }
+        }
+    }
+
+    return rootNode, nodes, nil
 }
 
 // Okkay let me educate you on the StarDag
-// these are just DAG's shaped in a star what did you think of 
+// these are just DAG's shaped in a star what did you think of
 // some rocket science ??
 
-func GenerateStarDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
+func GenerateStarDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error) {
 	if numNodes <= 0 {
 		return nil, nil, fmt.Errorf("numNodes must be positive")
 	}
 
-
 	nodes := make([]*myipld.MyNode, 0, numNodes)
 
-
 	centerData := map[string]interface{}{
-		"index" : 0,
-		"timestamp" : time.Now().UnixNano(),
-		"message" : "center-node",
+		"index":     0,
+		"timestamp": time.Now().UnixNano(),
+		"message":   "center-node",
 	}
 
-
 	centerNode, err := myipld.NewMyNode(centerData)
-
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create center node : %w", err)
 	}
 
-
 	nodes = append(nodes, centerNode)
-
 
 	// creating the leaf nodes and linking them to center
 	for i := 1; i < numNodes; i++ {
 		leafData := map[string]interface{}{
-			"index" : i,
-			"timestamp" : time.Now().UnixNano(),
-			"message" : fmt.Sprintf("leaf-node-%d", i),
+			"index":     i,
+			"timestamp": time.Now().UnixNano(),
+			"message":   fmt.Sprintf("leaf-node-%d", i),
 		}
 
-
 		leafNode, err := myipld.NewMyNode(leafData)
-
 
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create leaf node %d : %w", i, err)
@@ -289,7 +363,7 @@ func GenerateStarDAG(numNodes int) (*myipld.MyNode, []*myipld.MyNode, error){
 	return centerNode, nodes, nil
 }
 
-func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyNode, error){
+func GenerateRandomDAG(numNodes int, maxLinks int) (*myipld.MyNode, []*myipld.MyNode, error) {
 	if numNodes <= 0 {
 		return nil, nil, fmt.Errorf("numNodes must be positive")
 	}
@@ -298,7 +372,6 @@ func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyN
 		return nil, nil, fmt.Errorf("maxLinks must be positive")
 	}
 
-
 	// why seed ain't working normally like brooo com on T_T
 	// kam karjaa bhai T_T
 
@@ -306,14 +379,12 @@ func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyN
 
 	nodes := make([]*myipld.MyNode, 0, numNodes)
 
-
 	for i := 0; i < numNodes; i++ {
 		nodeData := map[string]interface{}{
-			"index" : i,
-			"timestamp" : time.Now().UnixNano(),
-			"message" : fmt.Sprintf("node-%d-data", i),
+			"index":     i,
+			"timestamp": time.Now().UnixNano(),
+			"message":   fmt.Sprintf("node-%d-data", i),
 		}
-
 
 		node, err := myipld.NewMyNode(nodeData)
 
@@ -323,7 +394,6 @@ func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyN
 
 		nodes = append(nodes, node)
 	}
-
 
 	for i := 1; i < numNodes; i++ {
 		current := nodes[i]
@@ -342,18 +412,5 @@ func GenerateRandomDAG(numNodes int, maxLinks int)(*myipld.MyNode, []*myipld.MyN
 		}
 	}
 
-
-	return nodes[0], nodes, nil
+	return nodes[numNodes-1], nodes, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-

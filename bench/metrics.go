@@ -8,21 +8,21 @@ import (
 )
 
 type PerformanceMetrics struct {
-	TotalTime       time.Duration
-	NodesPerSecond  float64
-	MemoryAlloc     uint64
-	MemoryTotal     uint64
-	GCPercentage    float64
-	SerializedSize  int
+	TotalTime      time.Duration
+	NodesPerSecond float64
+	MemoryAlloc    uint64
+	MemoryTotal    uint64
+	GCPercentage   float64
+	SerializedSize int
 }
 
 type DAGMetrics struct {
 	PerformanceMetrics
-	MaxDepth         int
-	AverageDepth     float64
-	MaxBreadth       int
-	LinkDensity      float64
-	Diameter         int
+	MaxDepth     int
+	AverageDepth float64
+	MaxBreadth   int
+	LinkDensity  float64
+	Diameter     int
 }
 
 func CollectMetrics(runFunc func() error) (*PerformanceMetrics, error) {
@@ -54,17 +54,97 @@ func CollectMetrics(runFunc func() error) (*PerformanceMetrics, error) {
 	}, nil
 }
 
+// func AnalyzeDAGStructure(root *myipld.MyNode, allNodes []*myipld.MyNode) *DAGMetrics {
+// 	depths := make(map[myipld.MyCID]int)
+// 	maxDepth := 0
+// 	totalDepth := 0
+
+// 	// BFS to calculate depths
+// 	queue := []*myipld.MyNode{root}
+// 	depths[root.Cid] = 0
+// 	visited := make(map[myipld.MyCID]bool)
+
+// 	visited[root.Cid] = true
+
+// 	for len(queue) > 0 {
+// 		current := queue[0]
+// 		queue = queue[1:]
+// 		currentDepth := depths[current.Cid]
+
+// 		for _, link := range current.Links {
+// 			if !visited[link.Cid] {
+// 				var node *myipld.MyNode
+// 				for _, n := range allNodes {
+// 					if n.Cid == link.Cid {
+// 						node = n
+// 						break
+// 					}
+// 				}
+// 				if node != nil {
+// 					depths[node.Cid] = currentDepth + 1
+// 					if currentDepth+1 > maxDepth {
+// 						maxDepth = currentDepth + 1
+// 					}
+// 					totalDepth += currentDepth + 1
+
+// 					visited[node.Cid] = true
+// 					queue = append(queue, node)
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	numNodes := len(visited)
+// 	averageDepth := 0.0
+// 	if numNodes > 0 {
+// 		averageDepth = float64(totalDepth) / float64(numNodes)
+// 	}
+// 	maxBreadth := 0
+// 	for _, node := range allNodes {
+// 		if len(node.Links) > maxBreadth {
+// 			maxBreadth = len(node.Links)
+// 		}
+// 	}
+
+// 	totalLinks := 0
+// 	for _, node := range allNodes {
+// 		totalLinks += len(node.Links)
+// 	}
+// 	linkDensity := float64(totalLinks) / float64(numNodes*(numNodes-1))
+// 	diameter := maxDepth
+
+// 	return &DAGMetrics{
+// 		MaxDepth:     maxDepth,
+// 		AverageDepth: averageDepth,
+// 		MaxBreadth:   maxBreadth,
+// 		LinkDensity:  linkDensity,
+// 		Diameter:     diameter,
+// 	}
+// }
+
 func AnalyzeDAGStructure(root *myipld.MyNode, allNodes []*myipld.MyNode) *DAGMetrics {
+	if root == nil {
+		return &DAGMetrics{}
+	}
+
+	nodeMap := make(map[myipld.MyCID]*myipld.MyNode, len(allNodes))
+	for _, node := range allNodes {
+		nodeMap[node.Cid] = node
+	}
+
+	// If root is not in nodeMap, add it
+	if _, found := nodeMap[root.Cid]; !found {
+		// This should not happen
+		nodeMap[root.Cid] = root
+	}
+
 	depths := make(map[myipld.MyCID]int)
 	maxDepth := 0
 	totalDepth := 0
 
-	// BFS to calculate depths
 	queue := []*myipld.MyNode{root}
 	depths[root.Cid] = 0
 	visited := make(map[myipld.MyCID]bool)
-
-	
 	visited[root.Cid] = true
 
 	for len(queue) > 0 {
@@ -74,52 +154,48 @@ func AnalyzeDAGStructure(root *myipld.MyNode, allNodes []*myipld.MyNode) *DAGMet
 
 		for _, link := range current.Links {
 			if !visited[link.Cid] {
-				var node *myipld.MyNode
-				for _, n := range allNodes {
-					if n.Cid == link.Cid {
-						node = n
-						break
+				if linkedNode, found := nodeMap[link.Cid]; found {
+					newDepth := currentDepth + 1
+					depths[link.Cid] = newDepth
+					if newDepth > maxDepth {
+						maxDepth = newDepth
 					}
-				}
-				if node != nil {
-					depths[node.Cid] = currentDepth + 1
-					if currentDepth+1 > maxDepth {
-						maxDepth = currentDepth + 1
-					}
-					totalDepth += currentDepth + 1
-
-					
-					visited[node.Cid] = true
-					queue = append(queue, node)
+					totalDepth += newDepth
+					visited[link.Cid] = true
+					queue = append(queue, linkedNode)
 				}
 			}
 		}
 	}
 
-	numNodes := len(visited)
+	numVisited := len(visited)
 	averageDepth := 0.0
-	if numNodes > 0 {
-		averageDepth = float64(totalDepth) / float64(numNodes)
+	if numVisited > 0 {
+		averageDepth = float64(totalDepth) / float64(numVisited)
 	}
+
 	maxBreadth := 0
+	totalLinks := 0
 	for _, node := range allNodes {
 		if len(node.Links) > maxBreadth {
 			maxBreadth = len(node.Links)
 		}
-	}
-
-	totalLinks := 0
-	for _, node := range allNodes {
 		totalLinks += len(node.Links)
 	}
-	linkDensity := float64(totalLinks) / float64(numNodes*(numNodes-1))
+
+	numNodes := len(allNodes)
+	linkDensity := 0.0
+	if numNodes > 1 {
+		linkDensity = float64(totalLinks) / float64(numNodes*(numNodes-1))
+	}
 	diameter := maxDepth
 
 	return &DAGMetrics{
-		MaxDepth:     maxDepth,
-		AverageDepth: averageDepth,
-		MaxBreadth:   maxBreadth,
-		LinkDensity:  linkDensity,
-		Diameter:     diameter,
+		MaxDepth:           maxDepth,
+		AverageDepth:       averageDepth,
+		MaxBreadth:         maxBreadth,
+		LinkDensity:        linkDensity,
+		Diameter:           diameter,
+		PerformanceMetrics: PerformanceMetrics{},
 	}
 }

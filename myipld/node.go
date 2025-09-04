@@ -41,7 +41,6 @@ type MyNode struct {
 // 	the data
 // 	*/
 
-
 // 	/*
 // 	Bug Resolve
 
@@ -55,10 +54,9 @@ type MyNode struct {
 // 	return node, nil
 // }
 
-
 func NewMyNode(data interface{}) (*MyNode, error) {
 	// Make data deterministic
-	sortedData := sortMapKeys(data)
+	sortedData := sortMapKeys(data) 
 	dataBytes, err := json.Marshal(sortedData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal data to json: %w", err)
@@ -77,6 +75,11 @@ func NewMyNode(data interface{}) (*MyNode, error) {
 
 func (n *MyNode) AddLink(name string, targetCID MyCID) error {
 	n.Links = append(n.Links, MyLink{Name: name, Cid: targetCID})
+	err := n.recomputeCID()
+
+	if err != nil {
+		fmt.Printf("AddLink failed : %v\n", err)
+	}
 	return n.recomputeCID()
 }
 
@@ -132,8 +135,8 @@ func FromBytes(data []byte) (*MyNode, error) {
 		return nil, fmt.Errorf("failed to unmarshal bytes to MyNode : %w", err)
 	}
 
-	node := &MyNode {
-		Data : serializableNode.Data,
+	node := &MyNode{
+		Data:  serializableNode.Data,
 		Links: serializableNode.Links,
 	}
 
