@@ -64,7 +64,7 @@ func TestInvalidDAGParameter(t *testing.T) {
 		t.Error("Expected error for zero nodes")
 	}
 
-	_, _, err = bench.GenerateDAG(bench.RandomDAG, 10)
+	_, _, err = bench.GenerateRandomDAG(10, 0)
 	if err == nil {
 		t.Error("Expected error for zero maxLimits")
 	}

@@ -25,28 +25,48 @@ type MyNode struct {
 	rawData []byte
 }
 
+// func NewMyNode(data interface{}) (*MyNode, error) {
+// 	dataBytes, err := json.Marshal(data)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to marshal data to json : %w", err)
+// 	}
+
+// 	node := &MyNode{
+// 		Data: dataBytes,
+// 	}
+
+// 	/* {comment}
+// 	compute the cid based on the serialized content (data + links)
+// 	for a new node, links are initially empty, but the cid still depends on
+// 	the data
+// 	*/
+
+
+// 	/*
+// 	Bug Resolve
+
+// 	I was not calculating the recomputeCID here LOL T _ T
+// 	*/
+
+// 	if err := node.recomputeCID(); err != nil {
+// 		return nil, fmt.Errorf("failed to compute CID for new node: %w", err)
+// 	}
+
+// 	return node, nil
+// }
+
+
 func NewMyNode(data interface{}) (*MyNode, error) {
-	dataBytes, err := json.Marshal(data)
+	// Make data deterministic
+	sortedData := sortMapKeys(data)
+	dataBytes, err := json.Marshal(sortedData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal data to json : %w", err)
+		return nil, fmt.Errorf("failed to marshal data to json: %w", err)
 	}
 
 	node := &MyNode{
 		Data: dataBytes,
 	}
-
-	/* {comment}
-	compute the cid based on the serialized content (data + links)
-	for a new node, links are initially empty, but the cid still depends on
-	the data
-	*/
-
-
-	/*
-	Bug Resolve
-
-	I was not calculating the recomputeCID here LOL T _ T
-	*/
 
 	if err := node.recomputeCID(); err != nil {
 		return nil, fmt.Errorf("failed to compute CID for new node: %w", err)
